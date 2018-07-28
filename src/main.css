@@ -1,0 +1,106 @@
+body {
+  font-family: sans-serif;
+  background-color: #000;
+  color: #ddd;
+}
+
+h1 {
+  font-size: 30px;
+}
+
+.splash {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  text-align: center;
+  background-color: #fff;
+  color: #000;
+}
+
+.home {
+
+}
+
+.nav {
+  display: inline-table;
+  margin: -10px;
+  margin-left: 0em;
+  position: fixed;
+  z-index: 100;
+  width: 100%;
+  top: 0%;
+  padding-top: 3em;
+  padding-bottom: 0.75em;
+  padding-left: 3em;
+}
+
+.navItem {
+  font-size: 2em;
+  padding: 0 0.2em;
+  display: inline-table;
+  width: 15%;
+  position: relative;
+  vertical-align: top;
+}
+
+.navActive {
+  text-decoration: underline;
+}
+
+.navLogo {
+  height: 4em;
+  background-color: inherit;
+  padding-right: 2.5em;
+  display: inline-table;
+  position: relative;
+  vertical-align: middle;
+  margin-top: -0.7em;
+}
+
+.footer {
+  width: 100%;
+  background-color: inherit;
+  text-align: center;
+  position: fixed;
+  bottom: 0%;
+  padding: 0.5em 0;
+  height: 2em;
+  z-index: 100;
+}
+
+.footer span {
+  font-weight: 100;
+}
+
+
+.jubertFooter{
+  height: 2em;
+  padding: 0 0.5em;
+}
+
+.footSubDiv{
+
+  vertical-align: middle;
+  display: inline-table;
+}
+
+
+.content {
+  padding-top: 7em;
+  padding-bottom: 35px;
+  margin: 0 10%;
+  display: inline-block;
+  width:80%;
+}
+
+a, a:visited {
+  text-decoration: none;
+  font-weight: bold;
+  color: #fff;
+}
+
+a:hover{
+  color: #f00;
+}

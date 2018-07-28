@@ -1,0 +1,237 @@
+body{
+  background-color: #000;
+  color: #ddd;
+  font-family: sans-serif;
+}
+
+
+#nav {
+  background-color: inherit;
+  display: inline-table;
+  margin: -10px;
+  margin-left: 0em;
+  position: fixed;
+  z-index: 100;
+  width: 100%;
+  top: 0%;
+  padding-top: 3em;
+  padding-bottom: 0.75em;
+  padding-left: 3em;
+}
+
+#footer {
+  width: 100%;
+  background-color: inherit;
+  text-align: center;
+  position: fixed;
+  bottom: 0%;
+  padding: 0.5em 0;
+  height: 2em;
+  z-index: 100;
+}
+
+#footer span {
+  font-weight: 100;
+}
+
+#content {
+  padding-top: 7em;
+  padding-bottom: 35px;
+  margin: 0 10%;
+  display: inline-block;
+  width:80%;
+}
+
+#admin {
+  background-color: #000;
+  text-align: center;
+  padding-top: 3em;
+}
+
+a a:visited {
+  text-decoration: none;
+  font-weight: bold;
+  color: #fff;
+}
+
+a:hover{
+  color: #f00;
+}
+
+.navItem {
+  font-size: 2em;
+  padding: 0 0.2em;
+  display: inline-table;
+  width: 15%;
+  position: relative;
+  vertical-align: top;
+}
+
+.navLogo {
+  background-color: inherit;
+  padding-right: 2.5em;
+  display: inline-table;
+  position: relative;
+  vertical-align: middle;
+  margin-top: -0.7em;
+}
+
+.navLogo img {
+  height: 4em;
+}
+
+#shows {
+  width: 100%;
+  padding-bottom: 2em;
+}
+
+#news {
+  width: 80%;
+}
+
+.info {
+  width: 100px;
+  font-size: 0.75em;
+  font-style: italic;
+}
+
+
+
+#moreless {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+  background-color: #000;
+  padding-top: 10px;
+  padding-bottom: 0.2em;
+
+}
+
+.productImg {
+  height: 300px;
+}
+
+#splash {
+  height: 500px;
+}
+
+td {
+  padding-top:0.5em;
+  padding-bottom:0.5em;
+}
+
+td:first-child {
+  padding-left:20px;
+  padding-right:0;
+}
+.entry {
+  padding-left: 50px;
+  text-align: left
+}
+
+.showInfo {
+  text-align: center;
+  width: 10em;
+}
+
+#releaseLarge {
+  height:20em;
+  vertical-align: top;
+
+}
+
+.releaseThumb {
+  display: inline-table;
+  width: 11em;
+  height: 11em;
+  padding: 1em;
+  align-self: center;
+  text-align: center;
+}
+
+.releaseThumbnail {
+  height: 10em;
+}
+
+ul {
+  list-style-image: url('button.gif');
+}
+
+.releaseSpan {
+  position: relative;
+  left: -10px;
+}
+
+.releaseInfo {
+  display:inline-table;
+  padding: 1em;
+  align-self: center;
+  vertical-align: top;
+  max-width: 30%;
+}
+
+#tracklist{
+
+}
+
+.centered {
+  align-content: center;
+  align-self: center;
+}
+
+#releaseHeader{
+  text-align: center;
+  font-size: 1.5em;
+  font-weight: bolder;
+  padding-bottom: 1em;
+}
+
+.unclicky{
+  color:#666;
+}
+
+.unclicky:hover{
+  color:#666;
+}
+
+.jubertFooter{
+  height: 2em;
+  padding: 0 0.5em;
+}
+
+.footSubDiv{
+
+  vertical-align: middle;
+  display: inline-table;
+}
+
+.footerLinks{
+  height: inherit;
+  display: inline-table;
+  vertical-align: middle;
+}
+
+#formDiv {
+  width: 40%;
+  display: inline-table;
+}
+
+#responsesDiv {
+  width: 40%;
+  display: inline-table;
+}
+
+#guestbookTextarea {
+  min-width: 25em;
+  min-height: 15em;
+  resize: none;
+}
+
+#guestbookAuthorField {
+  width: 25em;
+}
+
+.commentAuthor {
+  font-weight: bold;
+  color: #f00;
+}
