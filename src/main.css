@@ -34,6 +34,7 @@ h1 {
   padding-top: 3em;
   padding-bottom: 0.75em;
   padding-left: 3em;
+  background-color: #000;
 }
 
 .navItem {
@@ -61,13 +62,13 @@ h1 {
 
 .footer {
   width: 100%;
-  background-color: inherit;
+  background-color: #000;
   text-align: center;
   position: fixed;
   bottom: 0%;
   padding: 0.5em 0;
   height: 2em;
-  z-index: 100;
+  z-index: 1;
 }
 
 .footer span {
@@ -103,4 +104,17 @@ a, a:visited {
 
 a:hover{
   color: #f00;
+}
+
+.releaseThumb {
+  display: inline-table;
+  width: 11em;
+  height: 11em;
+  padding: 1em;
+  align-self: center;
+  text-align: center;
+}
+
+.releaseThumbnail {
+  height: 10em;
 }

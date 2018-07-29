@@ -12,6 +12,9 @@ type Msg
     | UrlChange Navigation.Location
     | ChangeLocation String
     | ShowResponse (WebData (List Show))
+    | NewsResponse (WebData (List NewsEntry))
+    | DiscogResponse (WebData (List DiscogEntry))
+    | ReleaseResponse (WebData Release)
 
 type alias Model =
     { path : String
@@ -19,7 +22,8 @@ type alias Model =
     , config : Config
     , shows : WebData (List Show)
     , news : WebData (List NewsEntry)
-    , releases : WebData (List Release)
+    , releases : WebData (List DiscogEntry)
+    , release : WebData Release
     }
 
 type alias AllDataResult =
@@ -32,11 +36,18 @@ type alias Config =
     { api_url : String
     }
 
+type alias DiscogEntry =
+    { id: Int
+    , name : String
+    , year : Int
+    , imgsrc : String
+    }
+
 type alias Release =
     { id : Int
     , name : String
     , year : Int
-    , label : String
+    , label : Maybe String
     , format : Maybe String
     , recorded : Maybe String
     , mastered : Maybe String
@@ -44,7 +55,7 @@ type alias Release =
     , tracklist : String
     , imgsrc : String
     , meta : String
-}
+    }
 
 type alias NewsEntry =
     { author : String

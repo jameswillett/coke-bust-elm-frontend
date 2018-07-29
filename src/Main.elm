@@ -1,11 +1,12 @@
 module Main exposing (..)
 
 import Http
+import String
+import List
 import Html exposing (..)
 import Html.Attributes exposing (src, href, class, classList, height, target)
 import Html.Events exposing (onWithOptions)
 import Navigation exposing (Location)
-import String
 import Json.Decode as Decode exposing (Decoder, string, int, nullable, list)
 import Json.Decode.Pipeline exposing (decode, required, optional)
 import RemoteData exposing (WebData)
@@ -21,6 +22,7 @@ initialModel config route =
     , shows = RemoteData.NotAsked
     , news = RemoteData.NotAsked
     , releases = RemoteData.NotAsked
+    , release = RemoteData.NotAsked
     }
 
 init : Config -> Location -> ( Model, Cmd Msg )
@@ -29,6 +31,14 @@ init config location =
         currentRoute = parseLocation location
     in
         (initialModel config currentRoute) |> update ( UrlChange location )
+
+maybeGetShows : Model -> Cmd Msg
+maybeGetShows model =
+    case model.shows of
+        RemoteData.NotAsked ->
+            getShows model
+        _ ->
+            Cmd.none
 
 getShows : Model -> Cmd Msg
 getShows model =
@@ -50,10 +60,79 @@ showDecoder =
         |> required "notes" (nullable string)
         |> required "links" (nullable string)
 
-showsDecoder : Decoder (List Show)
-showsDecoder =
-    list showDecoder
+maybeGetNews : Model -> Cmd Msg
+maybeGetNews model =
+    case model.news of
+        RemoteData.NotAsked ->
+            getNews model
+        _ ->
+            Cmd.none
 
+getNews : Model -> Cmd Msg
+getNews model =
+    let
+        url = model.config.api_url ++ "/news"
+    in
+        Http.get url (list newsDecoder)
+            |> RemoteData.sendRequest
+            |> Cmd.map NewsResponse
+
+newsDecoder : Decoder NewsEntry
+newsDecoder =
+    decode NewsEntry
+        |> required "author" string
+        |> required "content" string
+        |> required "date" string
+        |> required "id" int
+
+maybeGetDiscog : Model -> Cmd Msg
+maybeGetDiscog model =
+    case model.releases of
+        RemoteData.NotAsked ->
+            getDiscog model
+        _ ->
+            Cmd.none
+
+getDiscog : Model -> Cmd Msg
+getDiscog model =
+    let
+        url = model.config.api_url ++ "/releases"
+    in
+        Http.get url (list discogDecoder)
+            |> RemoteData.sendRequest
+            |> Cmd.map DiscogResponse
+
+discogDecoder : Decoder DiscogEntry
+discogDecoder =
+    decode DiscogEntry
+        |> required "id" int
+        |> required "name" string
+        |> required "year" int
+        |> required "imgsrc" string
+
+getRelease : Model -> Int -> Cmd Msg
+getRelease model id =
+    let
+        url = model.config.api_url ++ "/releases/" ++ (toString id)
+    in
+        Http.get url releaseDecoder
+            |> RemoteData.sendRequest
+            |> Cmd.map ReleaseResponse
+
+releaseDecoder : Decoder Release
+releaseDecoder =
+    decode Release
+        |> required "id" int
+        |> required "name" string
+        |> required "year" int
+        |> required "label" (nullable string)
+        |> required "format" (nullable string)
+        |> required "recorded" (nullable string)
+        |> required "mastered" (nullable string)
+        |> required "story" (nullable string)
+        |> required "tracklist" string
+        |> required "imgsrc" string
+        |> required "meta" string
 
 ---- UPDATE ----
 
@@ -71,12 +150,26 @@ update msg model =
             ( model, Navigation.newUrl path )
         ShowResponse shows ->
             ({ model | shows = shows}, Cmd.none)
+        NewsResponse news ->
+            ({ model | news = news}, Cmd.none)
+        DiscogResponse releases ->
+            ({ model | releases = releases}, Cmd.none)
+        ReleaseResponse release ->
+            ({ model | release = release}, Cmd.none)
 
 routeCmd : Model -> Route -> Cmd Msg
 routeCmd model route =
     case route of
         ShowsRoute ->
-            getShows model
+            maybeGetShows model
+        NewsRoute ->
+            maybeGetNews model
+        NewsArchive _ ->
+            maybeGetNews model
+        DiscographyRoute ->
+            maybeGetDiscog model
+        ReleaseRoute id ->
+            getRelease model id
         _ ->
             Cmd.none
 
@@ -128,7 +221,13 @@ router model =
             about
         NotFound ->
             notFound
-
+error : Html Msg
+error =
+  div [] [ text "Uh oh! Something went wrong. Email Jubert at "
+        , a [ href "mailto:iamunclezappa@gmail.com"]
+            [ text "iamunclezappa@gmail.com" ]
+        , text " for tech support"
+        ]
 news : Model -> Int -> Html Msg
 news model page =
     div [] [ text ("news. page " ++ toString page) ]
@@ -147,7 +246,39 @@ store model =
 
 releases : Model -> Html Msg
 releases model =
-    div [] [ text "discography" ]
+    case model.releases of
+        RemoteData.NotAsked ->
+            div [] [ text "Getting releases..."]
+        RemoteData.Loading ->
+            div [] [ text "Getting releases..."]
+        RemoteData.Failure _ ->
+            error
+        RemoteData.Success releases ->
+            renderReleases releases
+
+renderReleases : (List DiscogEntry) -> Html Msg
+renderReleases releases =
+    div []
+        <| (List.map releaseThumb releases)
+
+releaseThumb : DiscogEntry -> Html Msg
+releaseThumb release =
+    let
+        url = "/releases/" ++ (toString release.id)
+        name = release.name
+        year = release.year
+        imgsrc = release.imgsrc
+    in
+        a [ href url, onLinkClick (ChangeLocation url) ]
+            [ div [ class "releaseThumb" ]
+                [ text (name ++ " (" ++ (toString year) ++ ")")
+                , br [] []
+                , img [ class "releaseThumbnail"
+                    , src imgsrc
+                    ] []
+                ]
+            ]
+
 
 release : Model -> Html Msg
 release model =
