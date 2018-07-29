@@ -1,32 +1,26 @@
 module Main exposing (..)
 
+import Http
 import Html exposing (..)
 import Html.Attributes exposing (src, href, class, classList, height, target)
 import Html.Events exposing (onWithOptions)
 import Navigation exposing (Location)
 import String
-import Json.Decode as Decode
+import Json.Decode as Decode exposing (Decoder, string, int, nullable, list)
+import Json.Decode.Pipeline exposing (decode, required, optional)
+import RemoteData exposing (WebData)
 
 import Routing exposing (..)
-
----- MODEL ----
-
-
-type alias Model =
-    { path : String
-    , route : Route
-    , config : Config
-    }
-
-type alias Config =
-    { api_url : String
-    }
+import Types exposing (..)
 
 initialModel : Config -> Route -> Model
 initialModel config route =
     { path = ""
     , route = route
     , config = config
+    , shows = RemoteData.NotAsked
+    , news = RemoteData.NotAsked
+    , releases = RemoteData.NotAsked
     }
 
 init : Config -> Location -> ( Model, Cmd Msg )
@@ -36,15 +30,32 @@ init config location =
     in
         (initialModel config currentRoute) |> update ( UrlChange location )
 
+getShows : Model -> Cmd Msg
+getShows model =
+    let
+        url = model.config.api_url ++ "/shows"
+    in
+        Http.get url (list showDecoder)
+            |> RemoteData.sendRequest
+            |> Cmd.map ShowResponse
+
+showDecoder : Decoder Show
+showDecoder =
+    decode Show
+        |> required "id" int
+        |> required "date" string
+        |> required "venue" string
+        |> required "address" string
+        |> required "time" (nullable string)
+        |> required "notes" (nullable string)
+        |> required "links" (nullable string)
+
+showsDecoder : Decoder (List Show)
+showsDecoder =
+    list showDecoder
+
 
 ---- UPDATE ----
-
-
-type Msg
-    = NoOp
-    | UrlChange Navigation.Location
-    | ChangeLocation String
-
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
@@ -53,13 +64,21 @@ update msg model =
             let
                 newRoute = parseLocation newLocation
             in
-                ({ model | path = newLocation.pathname, route = newRoute }, Cmd.none)
+                ({ model | path = newLocation.pathname, route = newRoute }, routeCmd model newRoute)
         NoOp ->
             ( model, Cmd.none)
         ChangeLocation path ->
             ( model, Navigation.newUrl path )
+        ShowResponse shows ->
+            ({ model | shows = shows}, Cmd.none)
 
-
+routeCmd : Model -> Route -> Cmd Msg
+routeCmd model route =
+    case route of
+        ShowsRoute ->
+            getShows model
+        _ ->
+            Cmd.none
 
 ---- VIEW ----
 
@@ -154,7 +173,7 @@ home : Model -> Html Msg
 home model =
     div [ class "home" ]
         [ nav model
-        , footer
+        -- , footer
         , div [ class "content" ] [ router model ]
         ]
 
