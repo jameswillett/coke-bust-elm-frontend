@@ -3,7 +3,7 @@ module Views exposing (isRoot, splash, home)
 import String
 import List
 import Html exposing (..)
-import Html.Attributes exposing (src, href, class, classList, height, target, property, style, height, width)
+import Html.Attributes exposing (src, href, class, classList, height, target, property, style)
 import Json.Encode
 import RemoteData
 import Date
