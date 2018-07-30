@@ -66,38 +66,38 @@ prevNext news page =
             ]
 
 
-monthToNumber : Date.Month -> Int
+monthToNumber : Date.Month -> String
 monthToNumber month =
     case month of
         Date.Jan ->
-            1
+            "1"
         Date.Feb ->
-            2
+            "2"
         Date.Mar ->
-            3
+            "3"
         Date.Apr ->
-            4
+            "4"
         Date.May ->
-            5
+            "5"
         Date.Jun ->
-            6
+            "6"
         Date.Jul ->
-            7
+            "7"
         Date.Aug ->
-            8
+            "8"
         Date.Sep ->
-            9
+            "9"
         Date.Oct ->
-            10
+            "10"
         Date.Nov ->
-            11
+            "11"
         Date.Dec ->
-            12
+            "12"
 
 renderDate : Date.Date -> String
 renderDate date =
     let
-        month = Date.month date |> monthToNumber |> toString
+        month = Date.month date |> monthToNumber
         day = Date.day date |> toString
         year = Date.year date |> toString |> String.dropLeft 2
     in
