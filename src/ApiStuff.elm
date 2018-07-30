@@ -8,7 +8,7 @@ import RemoteData exposing (WebData)
 
 maybeGetShowArchive : Model -> Cmd Msg
 maybeGetShowArchive model =
-    case model.shows of
+    case model.pastShows of
         RemoteData.NotAsked ->
             getPastShows model
         _ ->
