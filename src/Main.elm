@@ -1,18 +1,18 @@
 module Main exposing (..)
 
-import Http
 import String
 import List
 import Html exposing (..)
-import Html.Attributes exposing (src, href, class, classList, height, target)
-import Html.Events exposing (onWithOptions)
+import Html.Attributes exposing (src, href, class, classList, height, target, property, style)
 import Navigation exposing (Location)
-import Json.Decode as Decode exposing (Decoder, string, int, nullable, list)
-import Json.Decode.Pipeline exposing (decode, required, optional)
-import RemoteData exposing (WebData)
-
+import Json.Encode
+import RemoteData
+import Date
+import Result exposing (andThen, toMaybe)
 import Routing exposing (..)
 import Types exposing (..)
+import NavTo exposing (navTo)
+import ApiStuff exposing (..)
 
 initialModel : Config -> Route -> Model
 initialModel config route =
@@ -20,6 +20,7 @@ initialModel config route =
     , route = route
     , config = config
     , shows = RemoteData.NotAsked
+    , pastShows = RemoteData.NotAsked
     , news = RemoteData.NotAsked
     , releases = RemoteData.NotAsked
     , release = RemoteData.NotAsked
@@ -32,107 +33,6 @@ init config location =
     in
         (initialModel config currentRoute) |> update ( UrlChange location )
 
-maybeGetShows : Model -> Cmd Msg
-maybeGetShows model =
-    case model.shows of
-        RemoteData.NotAsked ->
-            getShows model
-        _ ->
-            Cmd.none
-
-getShows : Model -> Cmd Msg
-getShows model =
-    let
-        url = model.config.api_url ++ "/shows"
-    in
-        Http.get url (list showDecoder)
-            |> RemoteData.sendRequest
-            |> Cmd.map ShowResponse
-
-showDecoder : Decoder Show
-showDecoder =
-    decode Show
-        |> required "id" int
-        |> required "date" string
-        |> required "venue" string
-        |> required "address" string
-        |> required "time" (nullable string)
-        |> required "notes" (nullable string)
-        |> required "links" (nullable string)
-
-maybeGetNews : Model -> Cmd Msg
-maybeGetNews model =
-    case model.news of
-        RemoteData.NotAsked ->
-            getNews model
-        _ ->
-            Cmd.none
-
-getNews : Model -> Cmd Msg
-getNews model =
-    let
-        url = model.config.api_url ++ "/news"
-    in
-        Http.get url (list newsDecoder)
-            |> RemoteData.sendRequest
-            |> Cmd.map NewsResponse
-
-newsDecoder : Decoder NewsEntry
-newsDecoder =
-    decode NewsEntry
-        |> required "author" string
-        |> required "content" string
-        |> required "date" string
-        |> required "id" int
-
-maybeGetDiscog : Model -> Cmd Msg
-maybeGetDiscog model =
-    case model.releases of
-        RemoteData.NotAsked ->
-            getDiscog model
-        _ ->
-            Cmd.none
-
-getDiscog : Model -> Cmd Msg
-getDiscog model =
-    let
-        url = model.config.api_url ++ "/releases"
-    in
-        Http.get url (list discogDecoder)
-            |> RemoteData.sendRequest
-            |> Cmd.map DiscogResponse
-
-discogDecoder : Decoder DiscogEntry
-discogDecoder =
-    decode DiscogEntry
-        |> required "id" int
-        |> required "name" string
-        |> required "year" int
-        |> required "imgsrc" string
-
-getRelease : Model -> Int -> Cmd Msg
-getRelease model id =
-    let
-        url = model.config.api_url ++ "/releases/" ++ (toString id)
-    in
-        Http.get url releaseDecoder
-            |> RemoteData.sendRequest
-            |> Cmd.map ReleaseResponse
-
-releaseDecoder : Decoder Release
-releaseDecoder =
-    decode Release
-        |> required "id" int
-        |> required "name" string
-        |> required "year" int
-        |> required "label" (nullable string)
-        |> required "format" (nullable string)
-        |> required "recorded" (nullable string)
-        |> required "mastered" (nullable string)
-        |> required "story" (nullable string)
-        |> required "tracklist" string
-        |> required "imgsrc" string
-        |> required "meta" string
 
 ---- UPDATE ----
 
@@ -150,18 +50,22 @@ update msg model =
             ( model, Navigation.newUrl path )
         ShowResponse shows ->
             ({ model | shows = shows}, Cmd.none)
+        ShowArchiveResponse pastShows ->
+            ({ model | pastShows = pastShows}, Cmd.none)
         NewsResponse news ->
             ({ model | news = news}, Cmd.none)
         DiscogResponse releases ->
             ({ model | releases = releases}, Cmd.none)
         ReleaseResponse release ->
-            ({ model | release = release}, Cmd.none)
+            ({ model | release = release}, maybeGetDiscog model)
 
 routeCmd : Model -> Route -> Cmd Msg
 routeCmd model route =
     case route of
         ShowsRoute ->
             maybeGetShows model
+        ShowArchiveRoute ->
+            maybeGetShowArchive model
         NewsRoute ->
             maybeGetNews model
         NewsArchive _ ->
@@ -179,20 +83,6 @@ routeCmd model route =
 view : Model -> Html Msg
 view model =
     if (isRoot model) then splash else (home model)
-
-
-
----- PROGRAM ----
-
-
-main : Program Config Model Msg
-main =
-    Navigation.programWithFlags UrlChange
-        { view = view
-        , init = init
-        , update = update
-        , subscriptions = always Sub.none
-        }
 
 isRoot : Model -> Bool
 isRoot model =
@@ -228,21 +118,206 @@ error =
             [ text "iamunclezappa@gmail.com" ]
         , text " for tech support"
         ]
+
+prevNext : (List NewsEntry) -> Int -> Html Msg
+prevNext news page =
+    let
+        prevUrl = if page == 1 then "/news" else "/news/" ++ (page - 1 |> toString)
+        nextUrl = "/news/" ++ (page + 1 |> toString)
+    in
+        div [ class "moreLess"]
+            [ navTo prevUrl [
+                classList [("unclicky", page == 0)]
+            ] [ text "Previous" ]
+            , span [] [ text " || "]
+            , navTo nextUrl [
+                classList [("unclicky", (page + 1 |> (*) 5) > (List.length news))]
+            ] [ text "Next" ]
+            ]
+
+
+monthToNumber : Date.Month -> Int
+monthToNumber month =
+    case month of
+        Date.Jan ->
+            1
+        Date.Feb ->
+            2
+        Date.Mar ->
+            3
+        Date.Apr ->
+            4
+        Date.May ->
+            5
+        Date.Jun ->
+            6
+        Date.Jul ->
+            7
+        Date.Aug ->
+            8
+        Date.Sep ->
+            9
+        Date.Oct ->
+            10
+        Date.Nov ->
+            11
+        Date.Dec ->
+            12
+
+renderDate : Date.Date -> String
+renderDate date =
+    let
+        month = Date.month date |> monthToNumber |> toString
+        day = Date.day date |> toString
+        year = Date.year date |> toString |> String.dropLeft 2
+    in
+        month ++ "/" ++ day ++ "/" ++ year
+
+extractDate : String -> (Maybe Date.Date) -> String
+extractDate original res =
+    case res of
+        Just x ->
+            renderDate x
+        _ ->
+            original
+
+parseDate : String -> String
+parseDate dateString =
+    toMaybe (Date.fromString dateString) |> (extractDate dateString)
+
+getPageOfNews : (List NewsEntry) -> Int -> (List NewsEntry)
+getPageOfNews news page =
+    List.drop (page * 5) news
+        |> List.take 5
+
+renderNewsEntry : NewsEntry -> Html Msg
+renderNewsEntry entry =
+    let
+        innerHtml = Json.Encode.string entry.content
+    in
+      tr []
+          [ td [ class "info" ] [ (parseDate entry.date) ++ " by " ++ entry.author |> text]
+          , td [ class "entry" ] [ span [ property "innerHTML" innerHtml  ] [] ]
+          ]
+
+renderNews : (List NewsEntry) -> Int -> Html Msg
+renderNews news page =
+    let
+        pageOfNews = getPageOfNews news page
+    in
+        div []
+            [ List.map renderNewsEntry pageOfNews |> table [ class "news" ]
+            , prevNext news page
+            ]
+
+
 news : Model -> Int -> Html Msg
 news model page =
-    div [] [ text ("news. page " ++ toString page) ]
+    case model.news of
+        RemoteData.NotAsked ->
+            div [] [ text "Getting news..."]
+        RemoteData.Loading ->
+            div [] [ text "Getting news..."]
+        RemoteData.Failure _ ->
+            error
+        RemoteData.Success news ->
+            renderNews news page
+
+maybeTime : (Maybe String) -> String
+maybeTime time =
+    case time of
+        Just x ->
+            x
+        _ ->
+            "?"
+
+maybeNotes : (Maybe String) -> String
+maybeNotes notes =
+    case notes of
+        Just x ->
+            x
+        _ ->
+            ""
+
+maybeLink : (Maybe String) -> Html Msg
+maybeLink link =
+    case link of
+        Just x ->
+            a [ href x] [ text "XXX"]
+        _ ->
+            span [] []
+
+renderShowRow : Show -> Html Msg
+renderShowRow show =
+    tr [ Html.Attributes.id ("showid-" ++ (toString show.id))]
+        [ td [ class "showInfo" ] [ text (parseDate show.date) ]
+        , td [ class "showInfo" ] [ text show.venue ]
+        , td [ class "showInfo" ] [ text show.address ]
+        , td [ class "showInfo" ] [ text (maybeTime show.time) ]
+        , td [ class "showInfo" ] [ text (maybeNotes show.notes) ]
+        , td [ class "showInfo" ] [ maybeLink show.links ]
+        ]
+
+renderShows : String -> (List Show) -> Html Msg
+renderShows title shows =
+    div []
+        [ h2 [] [ text title ]
+        , case (List.length shows) of
+            0 ->
+                p [] [ text "No Upcoming shows"]
+            _ ->
+                table [ class "shows" ]
+                    (tr []
+                        [ th [] [ text "Date" ]
+                        , th [] [ text "Venue" ]
+                        , th [] [ text "Address" ]
+                        , th [] [ text "Time" ]
+                        , th [] [ text "Notes" ]
+                        , th [] [ text "FB event Page" ]
+                        ] :: (List.map renderShowRow shows))
+        ]
+
+
+
 
 shows : Model -> Html Msg
 shows model =
-    div [] [ text "shows" ]
+    div []
+        [ case model.shows of
+            RemoteData.NotAsked ->
+                div [] [ text "Getting Shows..."]
+            RemoteData.Loading ->
+                div [] [ text "Getting Shows..."]
+            RemoteData.Failure _ ->
+                error
+            RemoteData.Success shows ->
+                renderShows "Upcoming Shows" shows
+        , div [] [ navTo "/shows/all" [] [ text "View show archive"]]
+        ]
 
 showArchive : Model -> Html Msg
 showArchive model =
-    div [] [ text "show archive"]
+    div []
+        [ case model.pastShows of
+            RemoteData.NotAsked ->
+                div [] [ text "Getting Show Archive..."]
+            RemoteData.Loading ->
+                div [] [ text "Getting Show Archive..."]
+            RemoteData.Failure _ ->
+                error
+            RemoteData.Success pastShows ->
+                renderShows "Show Archive" (List.reverse pastShows)
+        ]
 
 store : Model -> Html Msg
 store model =
-    div [] [ text "store" ]
+    div [] [ p [] [ text "Store maybe coming soon" ]
+            , p [] [ a [ target "_blank"
+                          ,href "http://newroseaccessories.storenvy.com/collections/1679757-coke-bust"
+                        ]
+                        [ text "Click here to be forwarded to our storenvy"]
+                    ]
+            ]
 
 releases : Model -> Html Msg
 releases model =
@@ -269,7 +344,7 @@ releaseThumb release =
         year = release.year
         imgsrc = release.imgsrc
     in
-        a [ href url, onLinkClick (ChangeLocation url) ]
+        navTo url []
             [ div [ class "releaseThumb" ]
                 [ text (name ++ " (" ++ (toString year) ++ ")")
                 , br [] []
@@ -279,10 +354,121 @@ releaseThumb release =
                 ]
             ]
 
+renderOther : DiscogEntry -> Html Msg
+renderOther other =
+    li [] [ navTo ("/releases/" ++ (toString other.id)) [] [ text other.name ]]
+
+renderOthers : (List DiscogEntry) -> Html Msg
+renderOthers others =
+    case (others |> List.length) of
+        0 ->
+            span [] []
+        _ ->
+            div []
+                [ text "Other Versions"
+                , ul [] (List.map renderOther others)
+                ]
+
+otherVersions : Model -> Release -> Html Msg
+otherVersions model release =
+    case model.releases of
+        RemoteData.NotAsked ->
+            div [] [ text "Getting other versions..."]
+        RemoteData.Loading ->
+            div [] [ text "Getting other versions..."]
+        RemoteData.Failure _ ->
+            error
+        RemoteData.Success releases ->
+            let
+                others = List.filter (\x -> x.meta == release.meta && x.id /= release.id) releases
+            in
+                renderOthers others
+
+maybeRenderStory : Release -> Html Msg
+maybeRenderStory release =
+    case release.story of
+        Just story ->
+            div [ class "releaseInfo"] [ text story ]
+        _ ->
+            span [] []
+
+songLi : String -> Html Msg
+songLi s =
+    li [] [ text s ]
+
+maybeTracklist : Release -> Html Msg
+maybeTracklist release =
+    case release.tracklist of
+        Just tracklist ->
+            ol [ class "tracklist" ]
+                (String.split "," tracklist |> List.map songLi)
+        _ ->
+            span [] []
+
+maybeLabel : Release -> Html Msg
+maybeLabel release =
+    case release.label of
+        Just label ->
+            div [] [ "Label: " ++ label |> text]
+        _ ->
+            span [] []
+
+maybeFormat : Release -> Html Msg
+maybeFormat release =
+    case release.format of
+        Just format ->
+            div [] [ "Format: " ++ format |> text]
+        _ ->
+            span [] []
+
+maybeRecorded : Release -> Html Msg
+maybeRecorded release =
+    case release.recorded of
+        Just recorded ->
+            div [] [ "Recorded: " ++ recorded |> text]
+        _ ->
+            span [] []
+
+maybeMastered : Release -> Html Msg
+maybeMastered release =
+    case release.mastered of
+        Just mastered ->
+            div [] [ "Mastered: " ++ mastered |> text]
+        _ ->
+            span [] []
+
+renderRelease : Model -> Release -> Html Msg
+renderRelease model release =
+    div []
+        [ div [ class "releaseHeader" ]
+            [ release.name ++ " (" ++ (toString release.year) ++ ")" |> text ]
+        , div [ class "releaseInfo" ]
+              [ div []
+                    [ img [ class "releaseLarge", src ("/" ++ release.imgsrc) ] [] ]
+              ]
+        , maybeRenderStory release
+        , div [ class "releaseInfo" ]
+              [ maybeTracklist release
+              , maybeLabel release
+              , maybeFormat release
+              , maybeRecorded release
+              , maybeMastered release
+              , otherVersions model release
+              ]
+        ]
+
 
 release : Model -> Html Msg
 release model =
-    div [] [ text "one release" ]
+    case model.release of
+        RemoteData.NotAsked ->
+            div [] [ text "Getting release..."]
+        RemoteData.Loading ->
+            div [] [ text "Getting release..."]
+        RemoteData.Failure _ ->
+            error
+        RemoteData.Success release ->
+            renderRelease model release
 
 about : Html Msg
 about =
@@ -295,9 +481,12 @@ notFound =
 splash : Html Msg
 splash =
     div [ class "splash" ]
-        [
-            a [ href "/news", onLinkClick (ChangeLocation "/news")]
-              [ img [ src "/billysfriend.jpg", height 500 ] [] ]
+        [ navTo "/news" []
+            [ img [ src "/billysfriend.jpg", height 500 ] []
+            , br [] []
+            , p [ style [ ("color", "black") ]] [ text "[click!]"]
+            ]
+        , p [] [ text "This site is not GDPR compliant. Sod off."]
         ]
 
 home : Model -> Html Msg
@@ -353,39 +542,16 @@ navItem title model =
                 , ("navActive", String.startsWith url model.path)
                 ]
             ]
-            [ a [ href url, onLinkClick (ChangeLocation url) ] [ text title]]
+            [ navTo url [] [ text title ] ]
 
-onLinkClick : msg -> Attribute msg
-onLinkClick message =
-    let
-        options =
-            { stopPropagation = False
-            , preventDefault = True
-            }
-    in
-        onWithOptions
-            "click"
-            options
-            (preventDefaultUnlessKeyPressed
-                |> Decode.andThen (maybePreventDefault message)
-            )
+---- PROGRAM ----
 
-preventDefaultUnlessKeyPressed : Decode.Decoder Bool
-preventDefaultUnlessKeyPressed =
-    Decode.map2
-        nor
-        (Decode.field "ctrlKey" Decode.bool)
-        (Decode.field "metaKey" Decode.bool)
 
-nor : Bool -> Bool -> Bool
-nor x y =
-    not (x || y)
-
-maybePreventDefault : msg -> Bool -> Decode.Decoder msg
-maybePreventDefault msg preventDefault =
-    case preventDefault of
-        True ->
-            Decode.succeed msg
-
-        False ->
-            Decode.fail "Delegated to browser default"
+main : Program Config Model Msg
+main =
+    Navigation.programWithFlags UrlChange
+        { view = view
+        , init = init
+        , update = update
+        , subscriptions = always Sub.none
+        }

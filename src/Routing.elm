@@ -1,18 +1,7 @@
 module Routing exposing (..)
 import UrlParser exposing (..)
 import Navigation
-
-type Route
-    = Root
-    | NewsRoute
-    | NewsArchive Int
-    | ShowsRoute
-    | ShowArchiveRoute
-    | StoreRoute
-    | DiscographyRoute
-    | ReleaseRoute Int
-    | AboutRoute
-    | NotFound
+import Types exposing (..)
 
 matchers : Parser (Route -> a) a
 matchers =
