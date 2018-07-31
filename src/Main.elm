@@ -1,4 +1,4 @@
-module Main exposing (..)
+port module Main exposing (..)
 
 import Html exposing (..)
 import Navigation exposing (Location)
@@ -7,6 +7,10 @@ import Routing exposing (parseLocation)
 import Types exposing (..)
 import ApiStuff exposing (..)
 import Views exposing (isRoot, splash, home)
+
+---- PORTS ----
+
+port title : String -> Cmd msg
 
 ---- INIT ----
 
@@ -39,7 +43,10 @@ update msg model =
             let
                 newRoute = parseLocation newLocation
             in
-                ({ model | path = newLocation.pathname, route = newRoute }, routeCmd model newRoute)
+                ({ model |
+                      path = newLocation.pathname
+                      , route = newRoute
+                  }, Cmd.batch [ getTitle newRoute |> title, routeCmd model newRoute ])
         NoOp ->
             ( model, Cmd.none)
         ChangeLocation path ->
@@ -53,7 +60,8 @@ update msg model =
         DiscogResponse releases ->
             ({ model | releases = releases}, Cmd.none)
         ReleaseResponse release ->
-            ({ model | release = release}, maybeGetDiscog model)
+            ({ model | release = release }
+              , Cmd.batch [ getTitleFromRelease release |> title, maybeGetDiscog model ])
 
 routeCmd : Model -> Route -> Cmd Msg
 routeCmd model route =
@@ -72,6 +80,38 @@ routeCmd model route =
             getRelease model id
         _ ->
             Cmd.none
+
+getTitleFromRelease : (RemoteData.WebData Release) -> String
+getTitleFromRelease release =
+    case release of
+        RemoteData.Success x ->
+            "Coke Bust - " ++ x.name
+        _ ->
+            "Coke Bust - Loading..."
+
+getTitle : Route -> String
+getTitle route =
+    case route of
+        Root ->
+            "Coke Bust"
+        NewsRoute ->
+            "Coke Bust - News"
+        NewsArchive _ ->
+            "Coke Bust - News"
+        ShowsRoute ->
+            "Coke Bust - Upcoming Shows"
+        ShowArchiveRoute ->
+            "Coke Bust - Show Archive"
+        StoreRoute ->
+            "Coke Bust - Store"
+        DiscographyRoute ->
+            "Coke Bust - Releases"
+        ReleaseRoute _ ->
+            "Coke Bust - Loading..."
+        AboutRoute ->
+            "Coke Bust - About"
+        NotFound ->
+            "Coke Bust - 404"
 
 ---- VIEW ----
 
