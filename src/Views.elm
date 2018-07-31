@@ -410,12 +410,15 @@ release model =
         RemoteData.Success release ->
             renderRelease model release
 
----- ABOUT (i need content) ----
+---- ABOUT ----
 
 about : Html Msg
 about =
-    div [] [ text "Jubert is the greatest bassist of all time" ]
-
+    div [] [ p [] [ text "Coke Bust is a Washington, D.C. straight edge hardcore band that was formed in 2006. "]
+            , p [] [ text "The band has since released two LP's and various EP's and splits. "]
+            , p [] [ text "Coke Bust has toured North and South America, Europe, and Japan. "]
+            , p [] [ text "Thanks for visiting our website!" ]
+            ]
 ---- NOT FOUND ----
 
 notFound : Html Msg
