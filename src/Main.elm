@@ -80,7 +80,7 @@ routeCmd model route =
         ReleaseRoute id ->
             getRelease model id
         StoreRoute ->
-            openStore "jubert"
+            openStore "jubert has big dick energy"
         _ ->
             Cmd.none
 
