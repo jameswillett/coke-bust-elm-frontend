@@ -10,4 +10,10 @@ app.ports.title.subscribe(title => {
   document.title = title
 })
 
+app.ports.openStore.subscribe(jubert => {
+  setTimeout(() => {
+      window.location.replace("http://newroseaccessories.storenvy.com/collections/1679757-coke-bust")
+  }, 5000);
+})
+
 registerServiceWorker();

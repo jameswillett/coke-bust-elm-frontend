@@ -11,6 +11,7 @@ import Views exposing (isRoot, splash, home)
 ---- PORTS ----
 
 port title : String -> Cmd msg
+port openStore : String -> Cmd msg
 
 ---- INIT ----
 
@@ -78,6 +79,8 @@ routeCmd model route =
             maybeGetDiscog model
         ReleaseRoute id ->
             getRelease model id
+        StoreRoute ->
+            openStore "jubert"
         _ ->
             Cmd.none
 

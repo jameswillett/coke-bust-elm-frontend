@@ -245,16 +245,16 @@ showArchive model =
 
 store : Model -> Html Msg
 store model =
-    -- div [] [ p [] [ text "Store maybe coming soon" ]
-    --         , p [] [ a [ target "_blank"
-    --                       ,href "http://newroseaccessories.storenvy.com/collections/1679757-coke-bust"
-    --                     ]
-    --                     [ text "Click here to be forwarded to our storenvy"]
-    --                 ]
-    --         ]
-    div []
-        [ iframe
-              [ src "http://newroseaccessories.storenvy.com/collections/1679757-coke-bust" ] [ text "x" ]]
+    div [] [ p [] [ text "Store maybe coming soon. Forwarding you to our storenvy. Buy some jewelry while you're there!" ]
+            , p [] [ a [ target "_blank"
+                        , href "http://newroseaccessories.storenvy.com/collections/1679757-coke-bust"
+                        ]
+                        [ text "Click here if not forwarded in 5 seconds"]
+                    ]
+            ]
+    -- div []
+    --     [ iframe
+    --           [ src "http://newroseaccessories.storenvy.com/collections/1679757-coke-bust" ] [ text "x" ]]
 
 ---- DISCOG PAGE STUFF ----
 
