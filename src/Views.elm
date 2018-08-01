@@ -460,7 +460,7 @@ footer : Html Msg
 footer =
     div [ class "footer" ]
     [ div [ class "footSubDiv" ]
-          [ img [class "jubertFooter", src "/jubertLeft.jpg" ] [] ]
+          [ img [class "jubertFooter", src "/jubertleft.jpg" ] [] ]
     , div [ class "footSubDiv" ]
         [ footerLink "https://cokebust.bandcamp.com/" "bandcamp", footerSpacer
         , footerLink "https://twitter.com/cokebust?lang=en" "twitter", footerSpacer
@@ -468,7 +468,7 @@ footer =
         , footerLink "mailto:cokebust@gmail.com" "cokebust@gmail.com"
         ]
     , div [ class "footSubDiv" ]
-          [ img [ class "jubertFooter", src "/jubertRight.jpg" ] [] ]
+          [ img [ class "jubertFooter", src "/jubertright.jpg" ] [] ]
     ]
 
 nav : Model -> Html Msg
