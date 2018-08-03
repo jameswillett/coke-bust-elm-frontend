@@ -176,8 +176,6 @@ td:first-child {
 
 .unclicky{
   color: #666;
-  text-decoration: line-through;
-  text-decoration-style:double;
   pointer-events: none;
   cursor: default;
 }
