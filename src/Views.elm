@@ -6,7 +6,8 @@ import Html exposing (..)
 import Html.Attributes exposing (src, href, class, classList, height, target, property, style)
 import Json.Encode
 import RemoteData
-import Date
+import Date exposing (Date)
+import Date.Extra as Date
 import Result exposing (andThen, toMaybe)
 import Types exposing (..)
 import NavTo exposing (navTo)
@@ -113,7 +114,7 @@ extractDate original res =
 
 parseDate : String -> String
 parseDate dateString =
-    toMaybe (Date.fromString dateString) |> (extractDate dateString)
+    toMaybe (Date.fromIsoString dateString) |> (extractDate dateString)
 
 getPageOfNews : (List NewsEntry) -> Int -> (List NewsEntry)
 getPageOfNews news page =
